@@ -1,0 +1,38 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "EventFrame: Start Server",
+      "type": "shell",
+      "command": "python scripts/run_server.py",
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "EventFrame: Create Admin Account",
+      "type": "shell",
+      "command": "python scripts/create_photographer.py --email admin@eventframe.com --password secret123 --name \"Lead Photographer\"",
+      "problemMatcher": []
+    },
+    {
+      "label": "EventFrame: Run Tests",
+      "type": "shell",
+      "command": "python -m pytest tests -v",
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
+      "label": "EventFrame: Run Checks & Package ZIP",
+      "type": "shell",
+      "command": "python scripts/run_checks.py",
+      "problemMatcher": []
+    }
+  ]
+}

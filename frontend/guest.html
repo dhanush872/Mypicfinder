@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>EventFrame | Guest Photo Delivery</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#3b82f6">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2">
+        <rect x="3" y="3" width="18" height="18" rx="4"/>
+        <circle cx="12" cy="12" r="4"/>
+        <path d="M16 7h.01"/>
+      </svg>
+      EventFrame
+      <span class="brand-badge">Guest Portal</span>
+    </div>
+    <div class="header-actions">
+      <span id="eventDateBadge" class="text-muted" style="font-size: 0.8rem;"></span>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- PIN Verification Card (Displayed if event has 4-digit PIN) -->
+    <div id="pinSection" class="card d-none" style="max-width: 420px; margin: 3rem auto; text-align: center;">
+      <h2 style="margin-bottom: 0.5rem;">🔒 Event Protected</h2>
+      <p class="text-muted" style="font-size: 0.9rem; margin-bottom: 1.5rem;">
+        This event is private. Please enter the 4-digit guest PIN provided by your host.
+      </p>
+      <div class="form-group">
+        <input type="password" id="pinInput" class="form-control" maxlength="4" pattern="[0-9]*" inputmode="numeric" placeholder="••••" style="font-size: 2rem; letter-spacing: 0.5rem; text-align: center;">
+      </div>
+      <button id="verifyPinBtn" class="btn btn-primary btn-block">Unlock Event</button>
+      <div id="pinError" class="text-danger mt-1" style="font-size: 0.85rem; display: none;"></div>
+    </div>
+
+    <!-- Main Portal Content -->
+    <div id="portalContent" class="d-none">
+      <section class="guest-hero">
+        <h1 id="eventTitle">Event Photos</h1>
+        <p id="eventVenue" class="text-muted"></p>
+      </section>
+
+      <!-- Biometric Privacy Notice Banner -->
+      <div class="privacy-banner">
+        <div class="privacy-icon">🛡️</div>
+        <div>
+          <strong>Privacy First Biometric Engine:</strong>
+          Guest selfies are analyzed <em>strictly in volatile RAM</em> for face vector matching. Your selfie is <strong>never</strong> saved to disk, database, or server logs, and vector queries are strictly isolated to this event.
+        </div>
+      </div>
+
+      <!-- Selfie Search Card -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">✨ Find Your Photos</h2>
+        </div>
+        <p class="text-muted mb-2" style="font-size: 0.9rem;">
+          Take or select a selfie to instantly find all event photos you appear in.
+        </p>
+
+        <!-- Biometric Consent Checkbox (Strictly Required) -->
+        <div class="form-group" style="background: rgba(31, 41, 55, 0.6); padding: 0.75rem 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+          <label class="form-checkbox-label">
+            <input type="checkbox" id="biometricConsent" style="width: 18px; height: 18px;">
+            <span>I explicitly consent to biometric facial matching strictly to find my photos for this event.</span>
+          </label>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="btn-group mb-2">
+          <!-- Smart Selfie Button: Native Front Camera on mobile, Webcam on desktop -->
+          <button id="smartCameraBtn" class="btn btn-primary">
+            📸 Take Selfie (Camera)
+          </button>
+          
+          <!-- Native Photo Library Picker -->
+          <button id="photoLibraryBtn" class="btn btn-secondary">
+            🖼️ Choose From Photos
+          </button>
+        </div>
+
+        <!-- Hidden Native File Inputs -->
+        <!-- Mobile Native Front Camera (capture="user") -->
+        <input type="file" id="mobileCameraInput" accept="image/*" capture="user" class="d-none">
+        <!-- Native Gallery Roll (no capture attribute) -->
+        <input type="file" id="photoLibraryInput" accept="image/*" class="d-none">
+
+        <!-- Selfie Preview & Upload Progress -->
+        <div id="selfiePreviewBox" class="d-none mt-2" style="display: flex; align-items: center; gap: 1rem;">
+          <img id="selfieThumbnail" src="" alt="Selfie preview" style="width: 64px; height: 64px; object-fit: cover; border-radius: 50%; border: 2px solid var(--primary);">
+          <div>
+            <div id="selfieStatusText" style="font-size: 0.9rem; font-weight: 600;">Searching event photos...</div>
+            <div id="selfieStats" class="text-muted" style="font-size: 0.8rem;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Facial Match Results Section -->
+      <section id="searchResultsSection" class="d-none mb-2">
+        <div class="card-header">
+          <h2 class="card-title" id="searchResultsHeading">Your Photos</h2>
+          <span id="searchLatencyBadge" class="badge badge-success"></span>
+        </div>
+        <div id="searchResultsGrid" class="grid-photos"></div>
+      </section>
+
+      <!-- Chronological Fallback Gallery Section -->
+      <section id="gallerySection" class="card">
+        <div class="card-header">
+          <h2 class="card-title">All Event Photos</h2>
+          <span id="galleryTotalBadge" class="badge badge-primary">0 photos</span>
+        </div>
+
+        <!-- Strict Selfie-Only Mode Message (if active) -->
+        <div id="strictModeNotice" class="d-none" style="text-align: center; padding: 2.5rem 1rem;">
+          <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🔒</div>
+          <h3>Strict Selfie-Only Mode Active</h3>
+          <p class="text-muted" style="max-width: 440px; margin: 0.5rem auto 1rem;">
+            Public browsing is disabled for this event. Please use the selfie camera above to view photos you are in.
+          </p>
+        </div>
+
+        <!-- Standard Gallery Grid -->
+        <div id="galleryGrid" class="grid-photos"></div>
+
+        <div id="galleryPagination" class="text-center mt-2 d-none">
+          <button id="loadMoreBtn" class="btn btn-secondary">Load More Photos</button>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Desktop Webcam Modal -->
+  <div id="webcamModal" class="modal-backdrop">
+    <div class="modal-dialog" style="max-width: 480px; text-align: center;">
+      <h3 style="margin-bottom: 0.75rem;">Take a Selfie</h3>
+      <div class="webcam-container">
+        <video id="webcamVideo" autoplay playsinline muted></video>
+      </div>
+      <div class="btn-group" style="justify-content: center;">
+        <button id="snapShutterBtn" class="btn btn-primary">📸 Snap Photo</button>
+        <button id="cancelWebcamBtn" class="btn btn-secondary">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fullscreen Lightbox Modal -->
+  <div id="lightbox" class="lightbox">
+    <div class="lightbox-header">
+      <span id="lightboxIndex">1 / 1</span>
+      <div style="display: flex; gap: 0.5rem;">
+        <a id="lightboxDownloadBtn" href="#" class="btn btn-sm btn-primary" download>⬇️ High-Res Download</a>
+        <button id="lightboxCloseBtn" class="btn btn-sm btn-secondary">✕ Close</button>
+      </div>
+    </div>
+    <div class="lightbox-content">
+      <button id="lightboxPrevBtn" class="lightbox-nav lightbox-prev">‹</button>
+      <img id="lightboxImg" src="" alt="Full view">
+      <button id="lightboxNextBtn" class="lightbox-nav lightbox-next">›</button>
+    </div>
+  </div>
+
+  <script src="/js/guest.js"></script>
+</body>
+</html>

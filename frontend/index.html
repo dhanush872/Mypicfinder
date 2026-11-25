@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EventFrame | Photographer Studio Dashboard</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#3b82f6">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="app-header">
+    <div class="brand">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2">
+        <rect x="3" y="3" width="18" height="18" rx="4"/>
+        <circle cx="12" cy="12" r="4"/>
+        <path d="M16 7h.01"/>
+      </svg>
+      EventFrame
+      <span class="brand-badge">Photographer Studio</span>
+    </div>
+    <div class="header-actions">
+      <div id="userProfileBadge" class="d-none" style="display: flex; align-items: center; gap: 0.75rem;">
+        <span id="userEmailText" class="text-muted" style="font-size: 0.85rem;"></span>
+        <button id="logoutBtn" class="btn btn-sm btn-secondary">Sign Out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Auth Section (Shown when logged out) -->
+    <div id="authSection" class="card" style="max-width: 440px; margin: 3rem auto;">
+      <div class="card-header">
+        <h2 class="card-title" id="authHeading">Photographer Sign In</h2>
+      </div>
+      <form id="authForm">
+        <div id="fullNameGroup" class="form-group d-none">
+          <label class="form-label" for="fullNameInput">Full Name</label>
+          <input type="text" id="fullNameInput" class="form-control" placeholder="Jane Doe">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="emailInput">Email Address</label>
+          <input type="email" id="emailInput" class="form-control" required placeholder="you@gmail.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="passwordInput">Password</label>
+          <input type="password" id="passwordInput" class="form-control" required minlength="4" placeholder="Password (at least 4 characters)">
+        </div>
+        <button type="submit" id="authSubmitBtn" class="btn btn-primary btn-block mb-1">Sign In</button>
+        <div class="text-center">
+          <button type="button" id="toggleAuthModeBtn" class="btn btn-sm btn-secondary" style="border: none; background: transparent; color: var(--primary);">
+            Need an account? Register here
+          </button>
+        </div>
+        <div id="authError" class="text-danger mt-1 text-center" style="font-size: 0.85rem; display: none;"></div>
+      </form>
+    </div>
+
+    <!-- Dashboard Content (Shown when logged in) -->
+    <div id="dashboardSection" class="d-none">
+      <!-- Top Action Bar -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+          <h1 style="font-size: 1.75rem; font-weight: 800;">Events & Sessions</h1>
+          <p class="text-muted" style="font-size: 0.9rem;">Manage live event ingestion, guest sharing, and camera tethering.</p>
+        </div>
+        <button id="newEventBtn" class="btn btn-primary">➕ New Event</button>
+      </div>
+
+      <!-- Events List View -->
+      <div id="eventsView">
+        <div id="eventsGrid" class="grid-events"></div>
+      </div>
+
+      <!-- Single Event Detail View -->
+      <div id="eventDetailView" class="d-none">
+        <div style="margin-bottom: 1rem;">
+          <button id="backToEventsBtn" class="btn btn-sm btn-secondary">← Back to All Events</button>
+        </div>
+
+        <!-- Event Summary & Controls Banner -->
+        <div class="card">
+          <div class="card-header" style="flex-wrap: wrap; gap: 1rem;">
+            <div>
+              <h2 class="card-title" id="detailTitle" style="font-size: 1.5rem;"></h2>
+              <p id="detailVenueDate" class="text-muted" style="font-size: 0.85rem;"></p>
+            </div>
+            <div class="btn-group">
+              <button id="showQrBtn" class="btn btn-sm btn-secondary">📱 Guest QR / Link</button>
+              <button id="editSettingsBtn" class="btn btn-sm btn-secondary">⚙️ Settings</button>
+              <button id="deleteEventBtn" class="btn btn-sm btn-danger">🗑️ Delete Event</button>
+            </div>
+          </div>
+
+          <!-- Live Tethering Watched-Folder Controls -->
+          <div style="background: rgba(31, 41, 55, 0.4); border-radius: var(--radius-sm); padding: 1rem; border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <strong>Camera Tethering Watcher:</strong>
+                <span id="watcherStatusBadge" class="badge badge-warning">Inactive</span>
+              </div>
+              <div id="watcherFolderText" class="text-muted" style="font-size: 0.8rem; margin-top: 0.25rem;">
+                No watched folder configured
+              </div>
+              <div id="watcherStatsText" class="text-muted" style="font-size: 0.75rem;"></div>
+            </div>
+            <div class="btn-group">
+              <button id="toggleWatcherBtn" class="btn btn-sm btn-primary">Start Auto-Ingestion</button>
+              <button id="viewAuditLogsBtn" class="btn btn-sm btn-secondary">Audit Logs</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bulk Drag & Drop Manual Photo Uploader -->
+        <div class="drop-zone" id="photoDropZone">
+          <div class="drop-icon">☁️</div>
+          <h3>Drag & Drop Photos Here</h3>
+          <p class="text-muted" style="font-size: 0.85rem; margin-top: 0.25rem;">
+            Supports high-res JPG, PNG, WebP with SHA-256 deduplication and automatic face detection
+          </p>
+          <input type="file" id="bulkFileInput" multiple accept="image/*" class="d-none">
+          <button id="browseFilesBtn" class="btn btn-sm btn-secondary mt-1">Browse Files</button>
+          <div id="uploadProgress" class="d-none mt-1" style="font-size: 0.85rem; font-weight: 600; color: var(--primary);"></div>
+        </div>
+
+        <!-- Event Photos Grid -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Event Photos (<span id="photoCountSpan">0</span>)</h3>
+            <span id="faceCountSpan" class="badge badge-primary">0 faces indexed</span>
+          </div>
+          <div id="photosGrid" class="grid-photos"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Create/Edit Event Modal -->
+  <div id="eventModal" class="modal-backdrop">
+    <div class="modal-dialog">
+      <h3 id="eventModalTitle" style="margin-bottom: 1.25rem;">Create New Event</h3>
+      <form id="eventForm">
+        <div class="form-group">
+          <label class="form-label" for="eventTitleInput">Event Title *</label>
+          <input type="text" id="eventTitleInput" class="form-control" required placeholder="e.g. Smith Wedding 2026">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="eventVenueInput">Venue / Location</label>
+          <input type="text" id="eventVenueInput" class="form-control" placeholder="e.g. Grand Plaza Ballroom">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="eventDateInput">Event Date</label>
+          <input type="date" id="eventDateInput" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="eventPinInput">4-Digit Guest PIN (Optional)</label>
+          <input type="text" id="eventPinInput" class="form-control" maxlength="4" pattern="[0-9]{4}" placeholder="e.g. 1234">
+          <small class="text-muted" style="font-size: 0.75rem;">Leave empty for public QR access</small>
+        </div>
+        <div class="form-group">
+          <label class="form-checkbox-label">
+            <input type="checkbox" id="strictSelfieModeInput">
+            <span><strong>Strict Selfie-Only Mode:</strong> Disable public browsing; guests can ONLY find photos with their selfie.</span>
+          </label>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="watchedFolderInput">Camera Tethering Watched Folder (Optional)</label>
+          <input type="text" id="watchedFolderInput" class="form-control" placeholder="e.g. C:\Tethered\SonyCapture">
+          <small class="text-muted" style="font-size: 0.75rem;">Monitors Sony Imaging Edge, Canon EOS Utility, Nikon NX Tether, Lightroom</small>
+        </div>
+        <div class="btn-group" style="justify-content: flex-end; margin-top: 1.5rem;">
+          <button type="button" id="cancelEventModalBtn" class="btn btn-secondary">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Event</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- QR Code & Sharing Modal -->
+  <div id="qrModal" class="modal-backdrop">
+    <div class="modal-dialog" style="text-align: center;">
+      <h3 style="margin-bottom: 0.5rem;">Guest QR Code & Share Link</h3>
+      <p class="text-muted" style="font-size: 0.85rem; margin-bottom: 1.25rem;">
+        Display on venue signage, cards, or projector screens for instant guest photo access.
+      </p>
+      
+      <div class="form-group" style="text-align: left; margin-bottom: 0.75rem;">
+        <label class="form-label" for="qrNetworkSelect" style="font-size: 0.8rem;">Host / Network Address</label>
+        <select id="qrNetworkSelect" class="form-control" style="font-size: 0.85rem;">
+          <option value="lan">📶 Venue Wi-Fi (Recommended for Mobile Scanning)</option>
+          <option value="localhost">💻 Localhost (Laptop Only)</option>
+          <option value="custom">🌐 Custom / Cloudflare Tunnel URL</option>
+        </select>
+        <div id="customHostGroup" class="d-none mt-1">
+          <input type="text" id="customHostInput" class="form-control" placeholder="https://your-tunnel.trycloudflare.com" style="font-size: 0.85rem;">
+        </div>
+      </div>
+
+      <div class="qr-preview-box">
+        <img id="qrImage" src="" alt="Guest QR code">
+      </div>
+
+      <div class="form-group" style="margin-top: 0.75rem;">
+        <input type="text" id="guestShareUrlInput" class="form-control" readonly style="text-align: center; font-size: 0.85rem;">
+      </div>
+
+      <div style="font-size: 0.78rem; color: #93c5fd; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.25); padding: 0.5rem 0.75rem; border-radius: var(--radius-sm); margin-bottom: 1rem; text-align: left;">
+        💡 <strong>Mobile Phone Scanning:</strong> Your phone must be connected to the same Wi-Fi or hotspot as this laptop. If guests are using mobile data, use a Cloudflare Tunnel URL.
+      </div>
+
+      <div class="btn-group" style="justify-content: center; margin-bottom: 1.5rem;">
+        <button id="copyShareUrlBtn" class="btn btn-sm btn-primary">📋 Copy Link</button>
+        <a id="downloadQrPngBtn" href="#" class="btn btn-sm btn-secondary" download="event-qr.png">PNG</a>
+        <a id="downloadQrSvgBtn" href="#" class="btn btn-sm btn-secondary" download="event-qr.svg">SVG</a>
+      </div>
+
+      <!-- Kill Switch: Token Revocation -->
+      <div style="border-top: 1px solid var(--border-color); padding-top: 1rem;">
+        <p class="text-muted" style="font-size: 0.8rem; margin-bottom: 0.5rem;">
+          Security Kill-Switch: Revoking invalidates all previously printed or shared QR links immediately.
+        </p>
+        <button id="revokeTokenBtn" class="btn btn-sm btn-danger">⚠️ Revoke & Regenerate Guest Token</button>
+      </div>
+
+      <div class="mt-2">
+        <button id="closeQrModalBtn" class="btn btn-secondary btn-block">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Audit Logs Modal -->
+  <div id="auditModal" class="modal-backdrop">
+    <div class="modal-dialog" style="max-width: 680px;">
+      <h3 style="margin-bottom: 1rem;">Tethering & Ingestion Audit Logs</h3>
+      <div id="auditLogsContainer" style="max-height: 400px; overflow-y: auto; font-family: monospace; font-size: 0.8rem; background: var(--bg-card); padding: 0.75rem; border-radius: var(--radius-sm);">
+        Loading logs...
+      </div>
+      <div class="text-center mt-2">
+        <button id="closeAuditModalBtn" class="btn btn-secondary">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>
